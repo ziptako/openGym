@@ -17,6 +17,16 @@ it('loads Chinese description AND steps for 1 2 stick drill, with English still 
 })
 
 it.each([
+  ['1030', 5],
+  ['2291', 6],
+  ['6032', 5],
+  ['1454', 5],
+  ['2234', 6],
+  ['5656', 5],
+  ['2249', 6],
+  ['1060', 6],
+  ['2290', 6],
+  ['1992', 5],
   ['0585', 6], // lever leg extension
   ['3386', 6], // lever seated leg extension v. 2
   ['0739', 7], // sled 45° leg press

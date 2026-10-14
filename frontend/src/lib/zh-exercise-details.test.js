@@ -15,3 +15,25 @@ it('loads Chinese description AND steps for 1 2 stick drill, with English still 
   _setLangState('en', {}, null, null)
   expect(instrFor({ id: '5965' })).toEqual(enInstructions['5965'])
 })
+
+it.each([
+  ['0585', 6], // lever leg extension
+  ['3386', 6], // lever seated leg extension v. 2
+  ['0739', 7], // sled 45° leg press
+  ['2146', 5], // lever hip thrust
+  ['7384', 5], // lever hip thrust (plate loaded)
+  ['0599', 7], // lever seated leg curl
+  ['0597', 6], // lever seated hip abduction
+  ['0598', 5], // lever seated hip adduction
+])('shows complete Chinese details for %s and retains English on language switch', (id, stepCount) => {
+  const ex = { id }
+  _setLangState('zh', {}, instructions, null)
+  _setDetails(enInstructions, enDescriptions, descriptions, 'zh')
+  expect(descFor(ex)).toMatch(/[\u4e00-\u9fff]/)
+  expect(descFor(ex)).not.toBe(enDescriptions[id])
+  expect(instrFor(ex)).toHaveLength(stepCount)
+  expect(instrFor(ex).every(step => /[\u4e00-\u9fff]/.test(step))).toBe(true)
+  _setLangState('en', {}, null, null)
+  expect(descFor(ex)).toBe(enDescriptions[id])
+  expect(instrFor(ex)).toEqual(enInstructions[id])
+})

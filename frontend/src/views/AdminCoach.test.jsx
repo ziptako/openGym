@@ -1,3 +1,4 @@
+import { setLang } from '../lib/i18n.js'
 // @vitest-environment happy-dom
 //
 // The operator's side of the Coach. This screen is the only place the feature can be switched
@@ -790,5 +791,37 @@ describe('AdminCoach — readiness and the step count', () => {
     expect(host.textContent).toContain('secret')
     // …and the way out is offered, not just described.
     expect(btn('Add API key')).toBeTruthy()
+  })
+})
+
+afterEach(async () => { await setLang('en') })
+
+describe('AdminCoach Simplified Chinese', () => {
+  it('translates setup, failure details and confirmation without changing requests', async () => {
+    mocks.routes['/api/admin/coach'] = status({ lastError: { at: new Date().toISOString(), errorClass: 'auth' } })
+    await setLang('zh')
+    await mount()
+    expect(host.textContent).toContain('AI 教练')
+    expect(host.textContent).toContain('输出 token 上限')
+    expect(host.textContent).toContain('提供商拒绝了此凭据')
+    expect(host.textContent).toContain('ops@example.com')
+    await tap(btn('移除'))
+    const ask = mocks.confirmSheet.mock.calls.at(-1)[0]
+    expect(ask.title).toBe('移除此凭据？')
+    expect(ask.message).toContain('已保存的密钥无法恢复')
+    await act(async () => { await ask.onConfirm() })
+    expect(sent('/api/admin/coach/disconnect')[0].body).toEqual({ provider: 'anthropic' })
+    await act(async () => { await setLang('en') })
+    expect(btn('Remove')).toBeTruthy()
+  })
+
+  it('keeps Chinese API key entry functional', async () => {
+    await setLang('zh')
+    await mount()
+    await tap(btn('替换密钥'))
+    act(() => sheetRoot.render(mocks.sheets.at(-1)(() => {})))
+    expect(sheetHost.textContent).toContain('Claude API 密钥')
+    expect(sheetHost.textContent).toContain('加密保存在此服务器上')
+    expect([...sheetHost.querySelectorAll('button')].some(b => b.textContent === '保存密钥')).toBe(true)
   })
 })

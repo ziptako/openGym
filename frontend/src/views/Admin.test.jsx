@@ -1,3 +1,4 @@
+import { setLang } from '../lib/i18n.js'
 // @vitest-environment happy-dom
 // The admin drill-down (QA C16): a profile whose stored workouts hold a null or otherwise
 // shapeless entry must still open, because the sheet host sits outside the route's
@@ -120,5 +121,36 @@ describe('Admin when the users cannot be loaded', () => {
     await settle()
     expect(text(page)).toContain('The last update failed')
     expect([...page.querySelectorAll('.item')].some(el => el.textContent.includes('Mallory'))).toBe(true)
+  })
+})
+
+afterEach(async () => { await setLang('en') })
+
+describe('Admin Simplified Chinese', () => {
+  it('switches the mounted dashboard and audit log, and keeps account data unchanged', async () => {
+    mocks.answers['/api/admin/audit'] = {
+      enabled: true, events: [{ id: 'a1', ev: 'auth.login.fail', ok: false, name: 'Mallory', msg: 'bad-password', ts: Date.now() }],
+      total: 1, retention: { days: 30 }, ip_mode: 'off', now: Date.now(),
+    }
+    const page = render(<Admin />)
+    await settle()
+    expect(page.textContent).toContain('Invite codes')
+    await act(async () => { await setLang('zh') })
+    expect(page.querySelector('h1').textContent).toBe('管理后台')
+    expect(page.textContent).toContain('1 位用户 · 本周 0 位活跃')
+    expect(page.textContent).toContain('保留 30 天')
+    expect(page.textContent).toContain('登录失败')
+    expect(page.textContent).toContain('密码错误')
+    expect(page.textContent).toContain('Mallory')
+    expect(page.querySelector('[aria-label="刷新"]')).toBeTruthy()
+    act(() => page.querySelector('.item').click())
+    const sheet = render(mocks.sheets[0](() => {}))
+    await settle()
+    expect(sheet.textContent).toContain('停用账号')
+    expect(sheet.textContent).toContain('下载用户数据')
+    expect(sheet.textContent).toContain('1 组')
+    await act(async () => { await setLang('en') })
+    expect(page.querySelector('h1').textContent).toBe('Admin')
+    expect(sheet.textContent).toContain('Disable account')
   })
 })
